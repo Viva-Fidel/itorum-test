@@ -1,0 +1,27 @@
+services:
+  backend:
+    container_name: backend
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: bash -c "python manage.py collectstatic --no-input && python manage.py makemigrations && python manage.py migrate && gunicorn -c gunicorn_config.py itorum_test.wsgi:application"
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8000:8000"
+
+  redis:
+    container_name: redis
+    image: redis:alpine
+
+  celery:
+    container_name: celery
+    build:
+      context: ./backend 
+      dockerfile: Dockerfile
+    command: celery -A itorum_test worker -l INFO
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - backend
+      - redis
